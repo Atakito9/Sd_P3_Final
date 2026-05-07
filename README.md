@@ -54,7 +54,7 @@ Lo primero que hicimos fue instalar todos componentes necesarios para la realiza
 ## Inicio de la practica
 ### Creacion y modificacion del template inicial
 Una vez todo instalado el siguiente paso es crear tanto la plantilla inicial usando de base los código ejemplo proporcionados.
-<img src="Captura4.PNG" alt="Cap4">
+<img src="Captura4.png" alt="Cap4">
 A partir de eso le empezamos a dar forma a la página web que queríamos creando las carpetas pages, components, stores, layouts y services cuyos archivos iniciales creados son el index en la carpeta pages, el primer componente en la carpeta components y el default en la carpeta layout encargados de mostrar la página inicial con sus primeros detalles en local. Se modifico al principio un poco el index para tener un tema y una paleta de colores presentes en toda la pagina.
 <img src="Captura.PNG" alt="Cap1">
 ### Implementacion del modulo de peliculas y API
@@ -62,17 +62,26 @@ Despues de modificar la pagina inicial se empezo a desarrollar el modulo para a�
 <img src="Captura3.PNG" alt="Cap3">
 Como se ve en la imagen, todo lo solicitado esta añadido, pero se añadieron unos extras mas como la posibilidad de anadir trailers, duracion de la pelicula, sinopsis y ademas, un modulo conectado a la base de datos TMDB llamado "BuscarPortada" encargado de búscar con un api la portada por el nombre escrito.
 
-Con todo esto fuen muy facil hacer el modulo para enseñar las peliculas, usando los datos dados por el modulo de hacer peliculas (PeliculaCard).
+Con todo esto fue muy facil hacer el modulo para enseñar las peliculas, usando los datos dados por el modulo de hacer peliculas (PeliculaCard).
 <div align='center'>
   <img src="Captura2.PNG" alt="Cap2" width="200">
   <img src="Captura5.PNG" alt="Cap5" width="200">
 </div>
 
+Por ultimo para mostrar los comentarios con las valoraciones, la media y la sinopsis, se penso hacer que cada pelicula tuviera su propia pagina como TMDB o IMDB, pero se uso un componente para simplificar y poder reusarlo todas las veces necesarias. La valoraciones funcionaban por un sistema donde podías asignar un número de estrellas seleccionando con el ratón y, sin todavía guardarse en una base aparte,se podia un comentario anónimo sobre la película y calculando con esto la valoración media de la película de la suma de las valoraciones de las instancias.
+
+ <img src="Captura7.PNG" alt="Cap7">
+
 ### Implementacion de los distintos filtros
-//Literalmente los filtros que estan puestos en la pagina web
+La siguiente modificación que se realizo fueron los filtros. Se realizo un filtro simple donde se podia filtrar por nombre, genero y año, pero a partir de la fran cantidad de peliculas los filtros pasaron a disponer una selección de estrellas, de si estaba actualmente en cines/emisión, cambiar el orden de orden ascendente a descendente por año, titulo y fecha de añadido y de un filtrado por marco de tiempo. Se añadio mas adelante una opcion de eliminar los filtros.
+
+ <img src="Captura8.PNG" alt="Cap8">
+
 ### Compatibilidad con pinia y firebase
 Por ultimo se implemento esta página web a firebase creando primero el archivo fireinit.js, segundo instalando firebase SDK, tercero creando la base de datos y luego publicando la propia página web que disponíamos.
 
+ <img src="Captura6.PNG" alt="Cap6">
+ 
 Una vez publicada nos encargaríamos de modificar lo necesario para que funcionara bien como una PWA de verdad e implementaríamos ciertas modificaciones gráficas además de añdir nuevas funciones que no teníamos antes como son:
 - Posibilidad de borrar tu propio comentario 
 - Sistemas de usuarios siendo los administradores los que pueden hacer todo y los usuarios distinguiendose de los anónimos al poder dejar comentarios
