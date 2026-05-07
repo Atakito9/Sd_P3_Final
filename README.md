@@ -28,7 +28,7 @@ Para completar esta practica nuestros objetivos fueron estos:
 ##### Extras:
 - [x] Sistema de cuentas
 - [x] Añadir diferentes tipos de entretenimiento audiovisual
-- [ ] Wishlist de peliculas
+- [x] Wishlist de peliculas
 
 Para implementar este webapp vamos a necesitar gestionar varios tipos de recursos como:
 
@@ -46,15 +46,35 @@ Para implementar este webapp vamos a necesitar gestionar varios tipos de recurso
 ⚠︎ Este codigo tiene implementacion con Firebase. Si se quiere hacer hosting propio, mirar la carpeta de stores para saber que catalogos hay que añadir.
 
 ## Preparacion
-//Cosas instaladas al inicio de la practica, dependencias ect ect
+Lo primero que hicimos fue instalar todos componentes necesarios para la realización de la práctica: 
+- El componente Vue: es un framework progresivo de JavaScript para construir interfaces de usuario. 
+- El componente Nuxt: se construye encima de Vue y facilita el desarrollo de apps completas, facilitando enrutamiento, organización, etc. 
+- El componente Vuetify: Librería de componentes visuales 
+- El componente Pinia: Librería de gestión para guardar y compartir datos entre diferentes componentes o páginas de la app.
 ## Inicio de la practica
 ### Creacion y modificacion del template inicial
-//Explicacion un poco de lo que hemos ido añadiendo de lo que hay en el codigo (Sabes lo que es cada cosa y donde esta)
+Una vez todo instalado el siguiente paso es crear tanto la plantilla inicial usando de base los código ejemplo proporcionados.
+//Imagen
+A partir de eso le empezamos a dar forma a la página web que queríamos creando las carpetas pages, components, stores, layouts y services cuyos archivos iniciales creados son el index en la carpeta pages, el primer componente en la carpeta components y el default en la carpeta layout encargados de mostrar la página inicial con sus primeros detalles en local. Se modifico al principio un poco el index para tener un tema y una paleta de colores presentes en toda la pagina.
+//Imagen
 ### Implementacion del modulo de peliculas y API
+Despues de modificar la pagina inicial se empezo a desarrollar el modulo para añadir peliculas, para que cualquier persona pudiera añadir peliculas. Al principio el componente guardaba las peliculas en la cache del navegador, asi que creamos un store para guardar los elementos de la pelicula para mas adelante enviarlos a la base de datos(FormularioPelicula).
+//Imagen
+Como se ve en la imagen, todo lo solicitado esta añadido, pero se añadieron unos extras mas como la posibilidad de anadir trailers, duracion de la pelicula, sinopsis y ademas, un modulo conectado a la base de datos TMDB llamado "BuscarPortada" encargado de búscar con un api la portada por el nombre escrito.
+
+Con todo esto fuen muy facil hacer el modulo para enseñar las peliculas, usando los datos dados por el modulo de hacer peliculas (PeliculaCard).
+//Imagenes hovering y no hovering
+
 //Aqui explicar un poco que hace y como se añaden peliculas, y como lo hemos hecho. Inventatelo un poco o pideselo al gemini y le añadire cosas
 ### Implementacion de los distintos filtros
 //Literalmente los filtros que estan puestos en la pagina web
 ### Compatibilidad con pinia y firebase
-//Comandos que hemos usado para conectar firebase y pinia, ya pondre yo imagenes de lo que hay en el catalogo y mas.
+Por ultimo se implemento esta página web a firebase creando primero el archivo fireinit.js, segundo instalando firebase SDK, tercero creando la base de datos y luego publicando la propia página web que disponíamos.
+
+Una vez publicada nos encargaríamos de modificar lo necesario para que funcionara bien como una PWA de verdad e implementaríamos ciertas modificaciones gráficas además de añdir nuevas funciones que no teníamos antes como son:
+- Posibilidad de borrar tu propio comentario 
+- Sistemas de usuarios siendo los administradores los que pueden hacer todo y los usuarios distinguiendose de los anónimos al poder dejar comentarios
+- Seccion de favoritos
+- Peliculas / series recomendadas
 ## Problemas encontrados
 //Luego pongo algo
