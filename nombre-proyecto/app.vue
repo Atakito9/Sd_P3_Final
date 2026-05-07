@@ -11,9 +11,14 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useAuthStore } from './store/auth'
 
-const cargando = ref(true)
+const cargando  = ref(true)
+const authStore = useAuthStore()
+
+onMounted(() => authStore.iniciarObservador())
+onUnmounted(() => authStore.detenerObservador())
 </script>
 
 <style>

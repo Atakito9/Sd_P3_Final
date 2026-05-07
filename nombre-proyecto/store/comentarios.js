@@ -50,13 +50,15 @@ export const useComentariosStore = defineStore('comentarios', {
       }
     },
 
-    async agregarComentario(peliculaId, puntuacion, texto) {
+    async agregarComentario(peliculaId, puntuacion, texto, usuario) {
       try {
         await addDoc(collection(db, 'comentarios'), {
           peliculaId,
           puntuacion,
-          texto:    texto?.trim() || '',
-          creadoEn: serverTimestamp()
+          texto:       texto?.trim() || '',
+          creadoEn:    serverTimestamp(),
+          uid:         usuario?.uid         || null,
+          displayName: usuario?.displayName || usuario?.email || 'Anónimo',
         })
       } catch (err) {
         console.error('Error al añadir comentario:', err)

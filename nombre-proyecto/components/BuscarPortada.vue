@@ -99,11 +99,12 @@ const TMDB_API_KEY = '824ce8d1cce84b6028b6390dc4b80724'
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500'
 
 // Según la categoría, usamos un endpoint distinto de TMDB:
-// - pelicula y documental → /search/movie
-// - serie y anime         → /search/tv
+// - pelicula → /search/movie
+// - serie y anime → /search/tv
+// - documental → search/movie || tv
 const config = computed(() => ({
   pelicula:   { endpoint: 'movie', label: 'Nombre de la película' },
-  documental: { endpoint: 'tv', label: 'Nombre del documental' },
+  documental: { endpoint: 'multi', label: 'Nombre del documental' },
   serie:      { endpoint: 'tv',    label: 'Nombre de la serie'    },
   anime:      { endpoint: 'tv',    label: 'Nombre del anime'      },
 }[props.categoria] || { endpoint: 'movie', label: 'Nombre de la película' }))

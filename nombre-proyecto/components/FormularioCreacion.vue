@@ -1,4 +1,4 @@
-<<template>
+<template>
   <v-card class="pa-6 bg-grey-darken-4 rounded-xl" elevation="4">
     <v-card-title class="text-h5 font-weight-bold d-flex align-center mb-2">
       <v-icon icon="mdi-plus-circle" class="mr-2" color="red" />
@@ -13,7 +13,7 @@
             <v-text-field
               v-model="item.nombre"
               label="Título"
-              :rules="[reglas.requerido]"
+              :rules="[reglas.requerido, reglas.sinDuplicado]"
               variant="filled"
               prepend-inner-icon="mdi-format-title"
             />
@@ -47,6 +47,34 @@
               color="red-darken-3"
               hide-details
               class="mb-2"
+            />
+
+            <!-- Duración: solo películas y documentales -->
+            <v-text-field
+              v-if="props.categoria === 'pelicula' || props.categoria === 'documental'"
+              v-model="item.duracion"
+              label="Duración (minutos)"
+              variant="filled"
+              prepend-inner-icon="mdi-clock-outline"
+              type="number"
+              min="1"
+              hide-details
+              class="mb-3"
+              placeholder="ej: 120"
+            />
+
+            <!-- Temporadas: solo series y anime -->
+            <v-text-field
+              v-if="props.categoria === 'serie' || props.categoria === 'anime'"
+              v-model="item.temporadas"
+              label="Número de temporadas"
+              variant="filled"
+              prepend-inner-icon="mdi-television-play"
+              type="number"
+              min="1"
+              hide-details
+              class="mb-3"
+              placeholder="ej: 3"
             />
 
             <!-- Descripción (opcional) -->
@@ -138,6 +166,9 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useCatalogoStore } from '../store/catalogo'
+
+const catalogoStore = useCatalogoStore()
 
 const ANIO_INICIAL_CINE = 1888
 const VALOR_INICIAL = 0
@@ -165,10 +196,13 @@ const checkboxLabel = computed(() => ({
 
 const listaGeneros = [
   'Acción', 'Animación', 'Aventura', 'Ciencia ficción',
-  'Comedia', 'Drama', 'Fantástico', 'Horror',
-  'Misterio', 'Romance', 'Thriller', 'Documental',
-  'Musical', 'Historica', 'Familiar', 'Deportes',
-  'Belico'
+  'Comedia', 'Crimen', 'Deportes', 'Drama',
+  'Fantástico', 'Historia', 'Terror', 'Misterio',
+  'Musical', 'Familiar', 'Película negra', 'Política',
+  'Psicológico', 'Romance', 'Sobrenatural', 'Superhéroes',
+  'Thriller', 'Distopía', 'Bélico', 'Western',
+  'Catástrofe', 'Espionaje', 'Terror psicologico', 'Comedia romántica',
+  'Slice of life', 'Isekai'
 ]
 
 const anioActual = new Date().getFullYear()
@@ -177,7 +211,14 @@ const reglas = {
   requerido:         v => !!v || 'Este campo es obligatorio',
   requeridoMultiple: v => (Array.isArray(v) && v.length >= MINIMO_SELECCION) || 'Selecciona al menos un género',
   anio:              v => (v >= ANIO_INICIAL_CINE && v <= anioActual) || `El año debe estar entre ${ANIO_INICIAL_CINE} y ${anioActual}`,
-  urlValida:         v => (!v || v.includes('youtube.com') || v.includes('youtu.be')) || 'Introduce una URL de YouTube válida'
+  urlValida:         v => (!v || v.includes('youtube.com') || v.includes('youtu.be')) || 'Introduce una URL de YouTube válida',
+  sinDuplicado:      v => {
+    if (!v) return true
+    const existe = catalogoStore.items.some(
+      i => i.nombre.trim().toLowerCase() === v.trim().toLowerCase()
+    )
+    return !existe || 'Ya existe una entrada con este título'
+  }
 }
 
 const refForm = ref(null)
@@ -188,6 +229,8 @@ const itemVacio = () => ({
   genero:          [],
   estreno:         '',
   enCine:          false,
+  duracion:        '',
+  temporadas:      '',
   descripcion:     '',
   tieneTrailer:    false,
   urlTrailer:      '',

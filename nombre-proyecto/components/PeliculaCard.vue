@@ -27,10 +27,10 @@
           En cines
         </div>
 
-        <!-- Botón eliminar -->
+        <!-- Botón eliminar (solo admin) -->
         <v-fade-transition>
           <v-btn
-            v-if="isHovering"
+            v-if="isHovering && (authStore.esAdmin)"
             icon="mdi-trash-can"
             size="x-small"
             color="red-darken-4"
@@ -90,12 +90,15 @@
 </template>
 
 <script setup>
+import { useAuthStore } from '../store/auth'
+
 defineProps({
   pelicula: { type: Object, required: true }
 })
 
 defineEmits(['eliminar', 'ver'])
 
+const authStore      = useAuthStore()
 const imagenFallback = 'https://placehold.co/300x450/1a1a1a/555555?text=Sin+portada'
 </script>
 

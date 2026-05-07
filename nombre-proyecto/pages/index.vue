@@ -4,9 +4,22 @@
     <div class="hero">
       <div class="hero-bg" />
       <div class="hero-content px-6 py-8">
-        <div class="logo">
-          <v-icon icon="mdi-play-circle" color="red-darken-3" size="40" class="mr-2" />
-          <span class="logo-text">MovieTime<span class="logo-excl">!</span></span>
+        <div class="d-flex align-center justify-space-between">
+          <div class="logo">
+            <v-icon icon="mdi-play-circle" color="red-darken-3" size="40" class="mr-2" />
+            <span class="logo-text">MovieTime<span class="logo-excl">!</span></span>
+          </div>
+          <UserMenu v-if="authStore.estaAutenticado" @abrir-admin="mostrarAdmin = true" />
+          <v-btn
+            v-else
+            color="red-darken-3"
+            variant="elevated"
+            size="small"
+            prepend-icon="mdi-login"
+            @click="navigateTo('/login')"
+          >
+            Iniciar sesión
+          </v-btn>
         </div>
         <p class="hero-sub">Catalogo de peliculas</p>
 
@@ -26,11 +39,19 @@
             <v-icon :icon="cat.icon" size="16" class="mr-1" />
             {{ cat.label }}
           </v-tab>
+          <v-tab
+            v-if="authStore.estaAutenticado"
+            value="favoritos"
+            class="tab-item"
+          >
+            <v-icon icon="mdi-heart" size="16" class="mr-1" color="red-darken-3" />
+            Favoritos
+          </v-tab>
         </v-tabs>
       </div>
     </div>
 
-    <div class="barra-acciones px-4 pt-3 pb-2">
+    <div v-if="categoriaActiva !== 'favoritos'" class="barra-acciones px-4 pt-3 pb-2">
       <div class="d-flex align-center ga-3 mb-2 flex-wrap">
         <v-text-field
           v-model="busqueda"
@@ -223,43 +244,71 @@
     </v-expand-transition>
 
     <div class="px-4 pb-10">
-      <v-row v-if="itemsFiltrados.length > 0" class="ma-0">
-        <v-col
-          v-for="item in itemsFiltrados"
-          :key="item.id"
-          cols="6"
-          sm="4"
-          md="3"
-          lg="2"
-          xl="1"
-          class="pa-1"
-        >
-          <PeliculaCard
-            :pelicula="item"
-            @eliminar="pedirConfirmacion"
-            @ver="abrirDetalle"
-          />
-        </v-col>
-      </v-row>
-
-      <div v-else-if="busqueda || hayFiltrosActivos" class="empty-state">
-        <v-icon icon="mdi-movie-search-outline" size="56" color="grey-darken-1" class="mb-4" />
-        <div class="text-h6 text-grey-darken-1">Sin resultados</div>
-        <div class="text-caption text-grey-darken-2 mt-1">
-          Prueba cambiando los filtros o el texto de búsqueda
+      <!-- Vista de favoritos -->
+      <template v-if="categoriaActiva === 'favoritos'">
+        <v-row v-if="itemsFavoritos.length > 0" class="ma-0">
+          <v-col
+            v-for="item in itemsFavoritos"
+            :key="item.id"
+            cols="6" sm="4" md="3" lg="2" xl="1"
+            class="pa-1"
+          >
+            <PeliculaCard
+              :pelicula="item"
+              @eliminar="pedirConfirmacion"
+              @ver="abrirDetalle"
+            />
+          </v-col>
+        </v-row>
+        <div v-else class="empty-state">
+          <v-icon icon="mdi-heart-outline" size="56" color="grey-darken-1" class="mb-4" />
+          <div class="text-h6 text-grey-darken-1">Sin favoritos todavía</div>
+          <div class="text-caption text-grey-darken-2 mt-1">
+            Abre cualquier película y pulsa el corazón para guardarla aquí
+          </div>
         </div>
-        <v-btn variant="text" color="grey" size="small" class="mt-3" @click="resetFiltros">
-          Limpiar todo
-        </v-btn>
-      </div>
+      </template>
 
-      <div v-else class="empty-state">
-        <v-icon :icon="categoriaActual.icon" size="56" color="grey-darken-1" class="mb-4" />
-        <div class="text-h6 text-grey-darken-1">Sin {{ categoriaActual.label.toLowerCase() }} todavía</div>
-        <div class="text-caption text-grey-darken-2 mt-1">
-          Pulsa "Añadir {{ categoriaActual.singular }}" para empezar
+      <!-- Vista normal del catálogo -->
+      <template v-else>
+        <v-row v-if="itemsFiltrados.length > 0" class="ma-0">
+          <v-col
+            v-for="item in itemsFiltrados"
+            :key="item.id"
+            cols="6"
+            sm="4"
+            md="3"
+            lg="2"
+            xl="1"
+            class="pa-1"
+          >
+            <PeliculaCard
+              :pelicula="item"
+              @eliminar="pedirConfirmacion"
+              @ver="abrirDetalle"
+            />
+          </v-col>
+        </v-row>
+
+        <div v-else-if="busqueda || hayFiltrosActivos" class="empty-state">
+          <v-icon icon="mdi-movie-search-outline" size="56" color="grey-darken-1" class="mb-4" />
+          <div class="text-h6 text-grey-darken-1">Sin resultados</div>
+          <div class="text-caption text-grey-darken-2 mt-1">
+            Prueba cambiando los filtros o el texto de búsqueda
+          </div>
+          <v-btn variant="text" color="grey" size="small" class="mt-3" @click="resetFiltros">
+            Limpiar todo
+          </v-btn>
         </div>
-      </div>
+
+        <div v-else class="empty-state">
+          <v-icon :icon="categoriaActual.icon" size="56" color="grey-darken-1" class="mb-4" />
+          <div class="text-h6 text-grey-darken-1">Sin {{ categoriaActual.label.toLowerCase() }} todavía</div>
+          <div class="text-caption text-grey-darken-2 mt-1">
+            Pulsa "Añadir {{ categoriaActual.singular }}" para empezar
+          </div>
+        </div>
+      </template>
     </div>
 
     <footer class="footer-main">
@@ -314,18 +363,43 @@
       </v-card>
     </v-dialog>
 
+    <!-- Dialog panel admin -->
+    <v-dialog v-model="mostrarAdmin" fullscreen transition="dialog-bottom-transition">
+      <v-card class="bg-black">
+        <v-toolbar color="black" density="compact">
+          <v-btn icon="mdi-close" @click="mostrarAdmin = false" />
+          <v-toolbar-title>
+            <v-icon icon="mdi-shield-crown" color="red-darken-3" class="mr-2" />
+            Panel de administración
+          </v-toolbar-title>
+        </v-toolbar>
+        <AdminPanel />
+      </v-card>
+    </v-dialog>
+
   </v-container>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
-import { useCatalogoStore } from '../store/catalogo'
+import { useCatalogoStore }  from '../store/catalogo'
+import { useAuthStore }      from '../store/auth'
+import { useFavoritosStore } from '../store/favoritos'
+import UserMenu from '../components/UserMenu.vue'
+import AdminPanel from './AdminPanel.vue'
 
 /* ── CONFIGURACIÓN MANUAL ── */
 const BUILD_VERSION = 'v.0.0beta'
 
 // ── Store ────────────────────────────────────────────────────────
-const store = useCatalogoStore()
+const store          = useCatalogoStore()
+const authStore      = useAuthStore()
+const favoritosStore = useFavoritosStore()
+
+// Computed: películas favoritas del usuario actual
+const itemsFavoritos = computed(() =>
+  store.items.filter(i => favoritosStore.esFavorito(i.id))
+)
 
 onMounted(() => store.suscribirCatalogo())
 onUnmounted(() => store.desuscribir())
@@ -446,7 +520,8 @@ const itemsFiltrados = computed(() => {
 })
 
 // ── Formulario ───────────────────────────────────────────────────
-const mostrarForm = ref(false)
+const mostrarForm  = ref(false)
+const mostrarAdmin = ref(false)
 
 const agregarItem = async (item) => {
   await store.agregarItem({ ...item, categoria: categoriaActiva.value })

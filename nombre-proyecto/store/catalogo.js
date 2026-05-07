@@ -25,7 +25,7 @@ export const useCatalogoStore = defineStore('catalogo', {
  
   actions: {
  
-    // ── Suscripción en tiempo real ──────────────────────────────
+    // ── Suscripción en tiempo real (Base de datos) ──────────────────────────────
     suscribirCatalogo() {
       if (this._unsubscribe) return
  
@@ -67,6 +67,8 @@ export const useCatalogoStore = defineStore('catalogo', {
           descripcion:     item.descripcion     ?? '',
           tieneTrailer:    item.tieneTrailer    ?? false,
           urlTrailer:      item.urlTrailer      ?? '',
+          duracion:        item.duracion        ? Number(item.duracion)   : null,
+          temporadas:      item.temporadas      ? Number(item.temporadas) : null,
           puntuacionMedia: 0,
           numVotos:        0,
           creadoEn:        serverTimestamp()
@@ -89,6 +91,8 @@ export const useCatalogoStore = defineStore('catalogo', {
           descripcion:  cambios.descripcion  ?? '',
           tieneTrailer: cambios.tieneTrailer ?? false,
           urlTrailer:   cambios.urlTrailer   ?? '',
+          duracion:     cambios.duracion     ? Number(cambios.duracion)   : null,
+          temporadas:   cambios.temporadas   ? Number(cambios.temporadas) : null,
         }
         // Solo actualizamos media y votos si vienen explícitamente
         // (cuando se llama desde recalcularMedia tras borrar un comentario)

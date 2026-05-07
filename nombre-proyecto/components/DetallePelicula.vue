@@ -15,7 +15,18 @@
       <v-btn icon="mdi-arrow-left" variant="tonal" class="btn-cerrar"
         @click="$emit('update:modelValue', false)" />
 
+      <!-- Favorito: solo para usuarios con sesión -->
+      <v-btn
+        v-if="authStore.estaAutenticado"
+        :icon="esFavorito ? 'mdi-heart' : 'mdi-heart-outline'"
+        variant="tonal"
+        :color="esFavorito ? 'red-darken-3' : 'grey'"
+        class="btn-favorito"
+        @click="toggleFavorito"
+      />
+
       <v-btn icon="mdi-pencil" variant="tonal" color="amber" class="btn-editar"
+        v-if="authStore.estaAutenticado"
         @click="abrirEdicion" />
 
       <v-card-text class="detalle-body pa-0">
@@ -115,8 +126,9 @@
                       <span class="text-caption text-grey">
                         {{ c.creadoEn?.toDate ? c.creadoEn.toDate().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : '...' }}
                       </span>
-                      <!-- Botón eliminar valoración -->
+                      <!-- Eliminar: admin o el propio autor -->
                       <v-btn
+                        v-if="authStore.esAdmin || (c.uid && c.uid === authStore.usuario?.uid)"
                         icon="mdi-trash-can-outline"
                         size="x-small"
                         variant="text"
@@ -125,8 +137,50 @@
                       />
                     </div>
                   </div>
+                  <div class="d-flex align-center ga-1 mb-2">
+                    <v-icon icon="mdi-account-circle" size="14" color="grey" />
+                    <span class="text-caption text-grey-lighten-1 font-weight-medium">{{ c.displayName || 'Anónimo' }}</span>
+                  </div>
                   <p v-if="c.texto" class="text-body-2 text-grey-lighten-2 ma-0">"{{ c.texto }}"</p>
                   <p v-else class="text-caption text-grey font-italic ma-0">Sin comentario</p>
+                </v-card>
+              </v-col>
+            </v-row>
+          </div>
+
+          <!-- Recomendaciones -->
+          <div v-if="recomendaciones.length > 0" class="mt-10">
+            <v-divider class="mb-6 border-opacity-10" />
+            <div class="text-subtitle-1 font-weight-bold text-white mb-4">
+              <v-icon icon="mdi-movie-open-star-outline" class="mr-2" color="red-darken-3" />
+              Puede que también te guste
+            </div>
+            <v-row>
+              <v-col
+                v-for="item in recomendaciones"
+                :key="item.id"
+                cols="6" sm="4" md="3"
+              >
+                <v-card
+                  class="rec-card rounded-xl overflow-hidden cursor-pointer"
+                  elevation="4"
+                  @click="abrirRecomendacion(item)"
+                >
+                  <v-img
+                    :src="item.urlImagen || fallback"
+                    aspect-ratio="2/3"
+                    cover
+                    class="rec-img"
+                  >
+                    <div class="rec-overlay d-flex flex-column justify-end pa-2">
+                      <div class="text-caption font-weight-bold text-white rec-titulo">{{ item.nombre }}</div>
+                      <div class="d-flex align-center ga-1 mt-1">
+                        <v-icon icon="mdi-star" color="amber" size="11" />
+                        <span class="text-caption text-amber">{{ item.puntuacionMedia ? item.puntuacionMedia.toFixed(1) : '—' }}</span>
+                        <span class="text-caption text-grey ml-1">{{ item.estreno }}</span>
+                      </div>
+                    </div>
+                  </v-img>
                 </v-card>
               </v-col>
             </v-row>
@@ -253,6 +307,9 @@
 <script setup>
 import { ref, reactive, computed, watch } from 'vue'
 import { useComentariosStore } from '../store/comentarios'
+import { useAuthStore }        from '../store/auth'
+import { useFavoritosStore }   from '../store/favoritos'
+import { useCatalogoStore }    from '../store/catalogo'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -260,6 +317,15 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:modelValue', 'votar', 'editar', 'recalcular-media'])
+
+// Ref interna para poder navegar entre recomendaciones sin cerrar el diálogo
+const peliculaActual = ref(null)
+watch(() => props.pelicula, (val) => {
+  peliculaActual.value = val
+}, { immediate: true })
+
+// Expuesto al template como 'pelicula'
+const pelicula = computed(() => peliculaActual.value)
 
 const visible = computed({
   get: () => props.modelValue,
@@ -271,20 +337,60 @@ const anioActual = new Date().getFullYear()
 
 const listaGeneros = [
   'Acción', 'Animación', 'Aventura', 'Ciencia ficción',
-  'Comedia', 'Drama', 'Fantástico', 'Horror',
-  'Misterio', 'Romance', 'Thriller', 'Documental',
-  'Musical', 'Historica', 'Familiar', 'Deportes', 'Belico'
+  'Comedia', 'Crimen', 'Deportes', 'Drama',
+  'Fantástico', 'Historia', 'Terror', 'Misterio',
+  'Musical', 'Familiar', 'Película negra', 'Política',
+  'Psicológico', 'Romance', 'Sobrenatural', 'Superhéroes',
+  'Thriller', 'Distopía', 'Bélico', 'Western', 
+  'Catástrofe', 'Espionaje', 'Terror psicologico', 'Comedia romántica',
+  'Slice of life', 'Isekai'
 ]
 
-// ── Store de comentarios ────────────────────────────────────────
+// ── Stores ──────────────────────────────────────────────────────
 const comentariosStore = useComentariosStore()
+const authStore        = useAuthStore()
+const favoritosStore   = useFavoritosStore()
+const catalogoStore    = useCatalogoStore()
+
+const abrirRecomendacion = (item) => {
+  peliculaActual.value = item
+  // Scroll al inicio del dialog
+  document.querySelector('.detalle-body')?.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+// Recomendaciones: misma categoría, al menos un género en común, excluir la actual, máx 4
+const recomendaciones = computed(() => {
+  if (!peliculaActual.value) return []
+  const generosActual = Array.isArray(peliculaActual.value.genero)
+    ? peliculaActual.value.genero
+    : [peliculaActual.value.genero]
+
+  return catalogoStore.items
+    .filter(item => {
+      if (item.id === peliculaActual.value.id) return false
+      if (item.categoria !== peliculaActual.value.categoria) return false
+      const itemGeneros = Array.isArray(item.genero) ? item.genero : [item.genero]
+      return itemGeneros.some(g => generosActual.includes(g))
+    })
+    .sort((a, b) => (b.puntuacionMedia || 0) - (a.puntuacionMedia || 0))
+    .slice(0, 4)
+})
+
+const esFavorito = computed(() =>
+  peliculaActual.value ? favoritosStore.esFavorito(peliculaActual.value.id) : false
+)
+
+const toggleFavorito = () => {
+  if (!authStore.usuario?.uid || !peliculaActual.value) return
+  favoritosStore.toggleFavorito(authStore.usuario.uid, peliculaActual.value.id)
+}
 
 const comentarios = computed(() =>
-  comentariosStore.porPelicula[props.pelicula?.id] || []
+  comentariosStore.porPelicula[peliculaActual.value?.id] || []
 )
 
 watch(
-  () => [props.modelValue, props.pelicula?.id],
+  () => [props.modelValue, peliculaActual.value?.id],
   ([abierto, nuevoId], [, anteriorId]) => {
     if (anteriorId && anteriorId !== nuevoId) comentariosStore.desuscribirPelicula(anteriorId)
     if (abierto && nuevoId) comentariosStore.suscribirPelicula(nuevoId)
@@ -301,23 +407,23 @@ const etiquetaCategoria = computed(() => ({
   serie:      'Serie',
   documental: 'Documental',
   anime:      'Anime'
-}[props.pelicula?.categoria] || 'Película'))
+}[peliculaActual.value?.categoria] || 'Película'))
 
 const checkboxEnCineLabel = computed(() => ({
   pelicula:   'Actualmente en cines',
   serie:      'Actualmente en emisión',
   documental: 'Disponible en streaming',
   anime:      'Actualmente en emisión'
-}[props.pelicula?.categoria] || 'Disponible ahora'))
+}[peliculaActual.value?.categoria] || 'Disponible ahora'))
 
 // ── Score ───────────────────────────────────────────────────────
 const scoreDisplay = computed(() => {
-  const p = props.pelicula?.puntuacionMedia || 0
+  const p = peliculaActual.value?.puntuacionMedia || 0
   return p > 0 ? p.toFixed(1) : '—'
 })
 
 const scoreColor = computed(() => {
-  const p = props.pelicula?.puntuacionMedia || 0
+  const p = peliculaActual.value?.puntuacionMedia || 0
   if (p >= 4)   return '#4caf50'
   if (p >= 2.5) return '#ffc107'
   return '#f44336'
@@ -329,9 +435,9 @@ const miComentario = ref('')
 const votoEnviado  = ref(false)
 
 const enviarVoto = async () => {
-  if (!miVoto.value || !props.pelicula) return
-  await comentariosStore.agregarComentario(props.pelicula.id, miVoto.value, miComentario.value)
-  emit('votar', { id: props.pelicula.id, puntuacion: miVoto.value })
+  if (!miVoto.value || !peliculaActual.value) return
+  await comentariosStore.agregarComentario(peliculaActual.value.id, miVoto.value, miComentario.value, authStore.usuario)
+  emit('votar', { id: peliculaActual.value.id, puntuacion: miVoto.value })
   miVoto.value       = 0
   miComentario.value = ''
   votoEnviado.value  = true
@@ -348,20 +454,20 @@ const pedirEliminarComentario = (c) => {
 
 const confirmarEliminarComentario = async () => {
   const c = dialogoBorrarComentario.comentario
-  if (!c || !props.pelicula) return
+  if (!c || !peliculaActual.value) return
 
   await comentariosStore.eliminarComentario(c.id)
 
   // Esperamos a que onSnapshot actualice los comentarios
   await new Promise(r => setTimeout(r, 400))
 
-  const restantes  = comentariosStore.porPelicula[props.pelicula.id] || []
+  const restantes  = comentariosStore.porPelicula[peliculaActual.value.id] || []
   const nuevaMedia = restantes.length > 0
     ? restantes.reduce((acc, r) => acc + r.puntuacion, 0) / restantes.length
     : 0
 
   emit('recalcular-media', {
-    id:              props.pelicula.id,
+    id:              peliculaActual.value.id,
     puntuacionMedia: Math.round(nuevaMedia * 10) / 10,
     numVotos:        restantes.length
   })
@@ -378,29 +484,58 @@ const edicion         = ref(null)
 
 const abrirEdicion = () => {
   edicion.value = {
-    nombre:       props.pelicula.nombre,
-    genero:       Array.isArray(props.pelicula.genero) ? [...props.pelicula.genero] : [props.pelicula.genero],
-    estreno:      props.pelicula.estreno,
-    enCine:       props.pelicula.enCine       ?? false,
-    urlImagen:    props.pelicula.urlImagen    ?? '',
-    descripcion:  props.pelicula.descripcion  ?? '',
-    tieneTrailer: props.pelicula.tieneTrailer ?? false,
-    urlTrailer:   props.pelicula.urlTrailer   ?? ''
+    nombre:       peliculaActual.value.nombre,
+    genero:       Array.isArray(peliculaActual.value.genero) ? [...peliculaActual.value.genero] : [peliculaActual.value.genero],
+    estreno:      peliculaActual.value.estreno,
+    enCine:       peliculaActual.value.enCine       ?? false,
+    urlImagen:    peliculaActual.value.urlImagen    ?? '',
+    descripcion:  peliculaActual.value.descripcion  ?? '',
+    tieneTrailer: peliculaActual.value.tieneTrailer ?? false,
+    urlTrailer:   peliculaActual.value.urlTrailer   ?? ''
   }
   dialogoEdicion.value = true
 }
 
 const guardarEdicion = () => {
   if (!edicionValida.value) return
-  emit('editar', { id: props.pelicula.id, ...edicion.value })
+  emit('editar', { id: peliculaActual.value.id, ...edicion.value })
   dialogoEdicion.value = false
 }
 </script>
 
 <style scoped>
+.rec-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rec-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.6) !important;
+}
+
+.rec-img {
+  aspect-ratio: 2/3;
+}
+
+.rec-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 55%);
+}
+
+.rec-titulo {
+  font-size: 0.75rem;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .detalle-card {
   position: relative;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .backdrop {
@@ -408,14 +543,16 @@ const guardarEdicion = () => {
   inset: 0;
   z-index: 0;
   pointer-events: none;
+  overflow: hidden;
 }
 
 .backdrop-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: blur(28px) brightness(0.25) saturate(1.4);
+  filter: blur(24px) brightness(0.5) saturate(1.4);
   transform: scale(1.08);
+  overflow: hidden;
 }
 
 .backdrop-overlay {
@@ -428,6 +565,13 @@ const guardarEdicion = () => {
   position: fixed;
   top: 16px;
   left: 16px;
+  z-index: 100;
+}
+
+.btn-favorito {
+  position: absolute;
+  top: 16px;
+  right: 70px;
   z-index: 100;
 }
 
