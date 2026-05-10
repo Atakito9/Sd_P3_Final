@@ -88,4 +88,5 @@ Una vez publicada nos encargaríamos de modificar lo necesario para que funciona
 - Seccion de favoritos
 - Peliculas / series recomendadas
 ## Problemas encontrados
-//Luego pongo algo
+
+Hubo varios problemas para conectar la web app con la base de datos de Firebase que eran culpa nuestra y que faltaba alguna dependencia o que no habiamos añadido los catalogos. Pero por lo demas excepto algunos bugs que hay en la pagina, no ha habido ningun problema mayor.
